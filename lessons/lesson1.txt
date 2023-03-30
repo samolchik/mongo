@@ -1,0 +1,193 @@
+
+Створюємо таблицю даних users
+db.users.insertMany([
+    {
+        name: 'Alex', age: 25, gender: 'male', address: {
+            city: 'Lviv',
+            street: 'Chornovola',
+            house: 25,
+            flat: 12
+        },
+        parents: [
+            'Vasia',
+            'Masha',
+        ],
+        rating: 5,
+        studying: ['js','java']
+    },
+    {
+        name: 'Natalii', age: 29, gender: 'female', address: {
+            city: 'Lviv',
+            street: 'Marko Vovchok',
+            house: 45,
+            flat: 45
+        },
+        parents: [
+            'Igor',
+            'Nina',
+        ],
+        rating: 4,
+        studying: ['python','java', 'css']
+    }
+])
+
+// Пошук таблиці users
+db.users.find();
+
+// Додавання одного обʼєкту
+db.users.insertOne({car:'audi', model: 'Q7'})
+
+// Додавання кількох обʼєктів
+db.users.insertMany()
+
+// Пошук по декільком даних
+db.users.find({gender:'female', age:29})
+
+// Пошук по id
+db.users.find({_id:ObjectId("6421dcedae40b3423f76ed11")})
+db.users.find({_id:"6421dcedae40b3423f76ed11"})
+
+// Пошук без врахування id та rating
+db.users.find({gender:'female', age:29},
+    {_id:false, rating:false}
+    )
+
+// Пошук із переліку
+db.users.find({
+    $or:[
+        {rating:2},
+        {rating:5},
+        {age:12}
+    ]
+})
+
+// Пошук за критеріями
+db.users.find({
+    $and:[
+        {rating:4},
+        {age:12}
+    ]
+})
+
+// Пошук даних, які входять в інтервал
+db.users.find({age:{$in:[25, 12, 16, 35, 19]}})
+
+// Пошук даних, які НЕ входять в інтервал
+db.users.find({age:{$nin:[25, 12, 16, 35, 19]}})
+db.users.find({
+    age:{
+        $not:{
+            $in:[25, 26]
+        }
+    }
+})
+
+// Пошук тексту, де:
+// і - приводить літери до одного будь-якого регістру
+// . - пропуск символа,
+// {2} - кількість символів, що потрібно пропустити,
+// ^ - початок слова,
+// $ - кінець слова,
+// * - необмежена кількість символів
+db.users.find({name:'Natalii'})
+
+// Пошук імені, яке починвється на А,
+db.users.find({name:/^a/i})
+
+// Пошук імені, яке закінчується на А
+db.users.find({name:/a$/i})
+
+// Пошук імені, у якому третя літера t
+db.users.find({name:/^.{2}t/i})
+
+// Пошук імені, яке починвється на k та закінчується на А
+db.users.find({name:/^k.*a$/i})
+
+// Пошук імені, яке має літеру v
+db.users.find({name:/.*v.*/i})
+
+// Сортування по зростанню
+db.users.find().sort({rating:1})
+
+// Сортування по спаданню
+db.users.find().sort({rating:-1})
+
+// Сортування по спаданню з використанням ліміту та пропускаємо елементи skip
+db.users.find().sort({rating:-1, name:-1}).limit(2).skip(4)
+
+// Пошук юзерів, чий рейтинг > 2 $gt
+db.users.find({rating:{$gt:2}})
+
+// Пошук юзерів, чий рейтинг < 2 $lt
+db.users.find({rating:{$lt:3}})
+
+// Пошук юзерів, чий рейтинг >= 3
+db.users.find({rating:{$gte:3}})
+
+// Пошук юзерів, чий рейтинг <= 3
+db.users.find({rating:{$lte:3}})
+
+// Пошук юзерів, чий рейтинг != 3
+db.users.find({rating:{$ne:3}})
+
+// Пошук юзерів, чий рейтинг = 3
+db.users.find({rating:{$eq:3}})
+// or
+db.users.find({rating:3})
+
+// Оновлюємо лише першого юзера
+db.users.updateOne(
+    {gender:'male'},  // шукаємо, що будемо змінювати
+    {$set:{gender:'animal'}} // прописуємо, на що замінити
+    )
+
+// Оновлюємо всіх юзерів за певним критерієм
+db.users.updateMany(
+    {gender:'male'},
+    {$set:{gender:'animal'}}
+    )
+
+
+// Робота з масивами
+// Пошук всіх юзерів, які мають в масиві studying 2 елементи
+db.users.find({studying:{$size:2}})
+
+// Пошук всіх юзерів, які мають поле parents
+db.users.find({parents:{$exists:1}})
+
+// Пошук всіх юзерів, які НЕ мають поле parents
+db.users.find({parents:{$exists:0}})
+// or
+db.users.find({parents:null})
+
+db.users.find()
+
+// Оновлюємо у всіх юзерів масив parents
+db.users.updateMany(
+    {parents:{$exists:1}},
+    {$set:{'parents.$[]':'not find'}} // $[] - звернення до всіх елементів
+    )
+
+// Пошук всіх юзерів, які мають в масиві відповідний елемент
+db.users.find({studying:'js'})
+
+db.users.find({'address.city':'Lviv'})
+
+// Пошук всіх юзерів, які мають в масиві під певним індексом (2) відповідний елемент (java)
+db.users.find({'studying.1':'java'})
+
+// Оновлюємо по id юзера
+db.users.updateOne(
+    {_id:ObjectId('6421dcedae40b3423f76ed12')},
+    {$push:{studying:['1', '2']}}      // щоб додати в [] викор. $push
+    )
+
+db.users.updateOne(
+    {_id:ObjectId('6421dcedae40b3423f76ed12')},
+    {$pull:{studying:'java'}}    // щоб видалити з [] викор. $pull
+    )
+
+db.users.find({_id:ObjectId('6421dcedae40b3423f76ed12')})
+
+// Видалення юзера по id
+db.users.deleteOne({_id:ObjectId('6421dd8bae40b3423f76ed1a')})

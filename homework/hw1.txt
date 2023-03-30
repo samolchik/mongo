@@ -1,0 +1,56 @@
+db.clients.find()
+
+// 1) Знайти всіх юзерів в кого вік менше за 20
+db.clients.find({age: {$lt: 20}})
+
+// 2) Знайти всіх юзерів в котрих хоча б один з батьків Tamara або Petro
+db.clients.find({
+    $or: [
+        {parents: 'Tamara'},
+        {parents: 'Petro'}
+    ]
+})
+
+// 3) Знайти всіх юзерів які вивчають js
+db.clients.find({studying: 'js'})
+
+// 4) Знайти всіх юзерів котрі вивчають тільки один предмет и додати їм java
+db.clients.updateMany(
+    {
+        studying: {$size: 1}
+    },
+    {$push: {studying: 'java'}}
+    )
+
+// 5) Знайти всіх юзерів номера будинків яких знаходяться в межах 1-20
+db.clients.find({
+    $and: [
+        {'address.house': {$gte: 1}},
+        {'address.house': {$lte: 20}}
+    ]
+})
+
+// 6) Знайти всіх юзерів в яких назва вулиці містить пробіл
+db.clients.find(
+    // {'address.street': /.* .*/}
+    {'address.street': /.*\s.*/}
+    )
+
+// 7) Видалити всіх юзерів в котрих немає поля studying
+db.clients.deleteMany({studying: {$exists: 0}})
+// or
+db.clients.deleteMany({studying: null)
+
+db.clients.find({_id: ObjectId('6425d5c2bb79ff3d866ad658')})
+db.clients.find()
+
+// 8) Знайти всіх юзерів в котрих в ім'я когось с батьків закінчується на 'na'
+db.clients.find({'parents':/na$/i})
+
+// 9) Всім юзерам котрі не вивчають python додати його
+db.clients.updateMany(
+    {studying: {$ne: 'python'}},
+    {$push: {studying: 'python'}})
+
+// 10) Посортувати юзерів по рейтингу та по номеру квартири (що то що то, від більшого меншого)
+db.clients.find().sort({rating: -1, 'address.flat': -1})
