@@ -1,0 +1,99 @@
+//Робота з масивами
+
+//Знайти студентів, в яких lessons повинен мати наступні уроки $all
+db.students.find({lessons:{$all:['english', 'geology']}})
+
+//Знайти студентів, в яких lessons повинен мати лише 2 уроки
+db.students.find( {lessons:{$size:2}})
+
+//Знайти студентів, в яких в lessons 2-й елемент informatics
+db.students.find({'lessons.1':'informatics'})
+
+//Знайти студентів з усіма lessons {},а потім показати лише 2 елементи, інші відрізати $slice
+db.students.find({},{lessons:{$slice:2}})
+
+//Знайти 1-го студента findOne і показати його імʼя
+db.students.findOne({'lessons.1':'informatics'}).name
+
+//Знайти студента по id та додати ще 1 урок
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f675')},
+    {$push:{lessons:'english'}}
+    )
+
+//Знайти студента по id та видалити 1 урок
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f675')},
+    {$pull:{lessons:'english'}}
+    )
+
+
+//Через $unset видалення в [] по індексу буде в 2 етапи
+// - знайти студента по id та видалити 1-й урок, але замість уроку буде null
+// - через $pull видалити null
+
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f675')},
+    {$unset:{'lessons.0':1}}
+    )
+
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f675')},
+    {$pull:{lessons:null}}
+    )
+
+//Через $set додати нове поле age
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f675')},
+    {$set:{age:12}}
+    )
+
+//Через $pop видалити останній елемент
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f671')},
+    {$pop:{lessons:1}} //останній елемент
+    )
+
+db.students.find({_id:ObjectId('6426dc998590082f3474f671')})
+
+//Через $pop видалити перший елемент
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f671')},
+    {$pop:{lessons:-1}} //перший елемент
+    )
+
+//Через $addToSet додаємо унікальне значення
+db.students.updateOne(
+    {_id:ObjectId('6426dc998590082f3474f671')},
+    {$addToSet:{lessons:'java'}} //додається лише в 1-му екземплярі
+    )
+
+//Знайти батьків які не працюють. Не працюючих батьків влаштувати офіціантами ("arrayFilters")
+db.students.updateMany(
+    {parents:{$exists:1}, 'parents.profession':null}, //шукаємо наявні поля parents, знаходимо батьків без profession
+    {$set:{'parents.$[item].profession':'waiter'}}, //додаємо професію waiter кожному батьку - $[item]
+    {arrayFilters:[{'item.profession':null}]} //фільтруємо лише у кого profession:null
+    )
+
+//Посортувати всіх студентів за кількістю уроків
+db.students.aggregate([
+    {
+        $addFields:{ //створюємо нове поле coutOfLessons, прописуємо $cond - умову, де
+            // $isArray:'$lessons' - перевірка чи це [], якщо так, то
+            // then:{$size:'$lessons'} - рахуємо к-сть уроків і
+            // якщо немає lessons, запиши 0 else:0
+            coutOfLessons:{$cond:{if:{$isArray:'$lessons'}, then:{$size:'$lessons'}, else:0}}
+        }
+    },
+    {
+        $sort:{
+            coutOfLessons:- 1
+        }
+    },
+    {
+        $project:{
+            coutOfLessons:0 //після сортування поле coutOfLessons прибираємо
+        }
+    }
+])
+db.students.find()

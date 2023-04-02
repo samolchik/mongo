@@ -1,0 +1,120 @@
+db.students.find()
+db.teacher.find()
+
+db.teacher.aggregate([
+    {
+        $group: { //групування завжди по _id
+            _id: '$lesson' //задаємо параметр, по якому полю групувати
+        }
+    }
+])
+
+db.teacher.aggregate([
+    {
+        $group: {
+            _id: '$lesson',
+            coutOfLessons: {$sum:1},
+            min:{$min:'$payment'},
+            max:{$max:'$payment'},
+            avg:{$avg:'$payment'},
+            sumZPbyLesson:{$sum:'$payment'}
+        }
+    }
+])
+
+db.teacher.aggregate([
+    {
+        $group: {     // перший агрегат - групування
+            _id: '$lesson',
+            coutOfLessons: {$sum:1}
+
+        }
+    },
+    {
+        $sort:{      // другий агрегат - сортування
+            coutOfLessons:-1
+        }
+    },
+    {
+         $project:{  // третій агрегат - заміна/зміна елементів
+             lesson:'$_id',    // створюємо нове поле lesson з даними _id
+             coutOfLessons:1,  // 1 для відображення поля coutOfLessons
+             _id:false         // видаляємо непотрібне поле
+             // or
+             // _id:0
+         }
+    }
+])
+
+// обʼєднання двох колекцій teacher та students, які мають повʼязані дані
+
+db.teacher.aggregate([ // беремо колекцію teacher
+    {
+        $lookup:{
+            from:'students', // обʼєднуємо з students
+            localField:'class_curator', // дані із teacher
+            foreignField:'class', // дані із students
+            as:'myStudents' // додаємо дані students в новий [] в teacher
+        }
+    }
+])
+
+// обʼєднання двох колекцій за кретерієм
+
+db.teacher.aggregate([
+    {
+        $match:{     // пошук за критерієм
+            class_curator:{$gte:5}  // знайти лише кураторів старше 5 класу
+        }
+    },
+    {
+        $lookup:{
+            from:'students',
+            localField:'class_curator',
+            foreignField:'class',
+            as:'myStudents'
+        }
+    },
+    {
+        $sort:{
+            class_curator:1
+        }
+    },
+    // {
+    //     $skip:2 // пропускаємо 2 елемента
+    // },
+    // {
+    //     $limit:2
+    // },
+    {
+        $match:{ // знайти куратора,в якого у одного із учнів мʼя батька Dima
+            'myStudents.parents.name':'Dima'
+        }
+    }
+])
+
+
+db.teacher.aggregate([
+    {
+        $lookup: {
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+    },
+    {
+        $unwind:'$myStudents' //  розкладання []
+    },
+    {
+        $unwind: '$myStudents.parents' //  розкладання наступного [] parents
+    },
+    {
+        $match:{
+            'myStudents.parents.profession':'doctor'
+        }
+    },
+    {
+        $count:'DoctorCount'
+    }
+])
