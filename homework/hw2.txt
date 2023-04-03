@@ -13,7 +13,7 @@ db.students.find({lessons: 'mathematics'})
 db.students.find({'parents.profession': 'scientist'})
 
 // 5) Знайти дітей, в яких середня оцінка більша за 4
-db.students.find({avgScore: {$gte: 4}})
+db.students.find({avgScore: {$gt: 4}})
 
 // 6) Знайти найкращого учня
 db.students.find().sort({avgScore: -1}).limit(1)
@@ -28,7 +28,7 @@ db.students.find().sort({avgScore: -1}).limit(3)
 db.students.aggregate([
     {
         $group: {
-            _id: '$class',
+            _id: 0,
             count: {$avg: '$avgScore'}
         }
     }
@@ -59,6 +59,25 @@ db.students.aggregate([
     }
 ])
 
+or
+
+db.students.aggregate([
+    {
+        $match:{
+            $or:[
+                // {lessons:'mathematics'},
+                {lessons:'physics'}
+            ]
+        }
+    },
+    {
+        $group:{
+            _id:0,
+            myAvg:{$avg:'$avgScore'}
+        }
+    }
+])
+
 // 11) Знайти середній бал по 2 класі
 db.students.aggregate([
     {
@@ -84,14 +103,42 @@ db.students.aggregate([
 // 12) Знайти дітей з не повною сімєю
 db.students.find({parents:{$size:1}})
 
+db.students.find({
+    $or:[
+        {parents: {$exists: 0}},
+        {parents:{$size:1}}
+
+    ]
+})
+
 // 13) Знайти батьків які не працюють
 db.students.find({'parents.profession':null})
 
-db.students.updateMany(
-    {parents:{$exists:1},'parents.profession':null},
-    {$set:{'parents.$[item].profession':'waiter'}},
-    {arrayFilters:[{'item.profession':null}]}
-    )
+    db.students.aggregate([
+        {
+            $unwind:'$parents'
+        },
+        {
+            $match:{
+                'parents.profession':null
+            }
+        },
+        {
+            $project:{
+                parentName:'$parents.name',
+                parentGander:'$parents.gender',
+            }
+        }
+
+    ])
+
+// ********** Не працюючих батьків влаштувати офіціантами (підказка: гуглимо "arrayFilters")
+
+    db.students.updateMany(
+        {parents:{$exists:1},'parents.profession':null},
+        {$set:{'parents.$[item].profession':'waiter'}},
+        {arrayFilters:[{'item.profession':null}]}
+        )
 
 // 14) Вигнати дітей, які мають середній бал менше ніж 2.5
 db.students.aggregate([
@@ -106,6 +153,8 @@ db.students.aggregate([
         }
     }
 ])
+
+
 db.students.find({avgScore: {$lte:2.5}}).deleteMany()
 
 // 15) Дітям, батьки яких працюють в освіті ( teacher ) поставити 5
@@ -122,6 +171,9 @@ db.students.find({
         {lessons:'physics'}
     ]
 })
+
+db.students.find({class:{$lt:5},lessons:'physics'})
+
 // 17) Знайти найуспішніший клас
 db.students.aggregate([
 
@@ -146,4 +198,4 @@ db.students.aggregate([
     }
 ])
 //
-// ********** Не працюючих батьків влаштувати офіціантами (підказка: гуглимо "arrayFilters")
+
